@@ -1,0 +1,21 @@
+{
+    "name": "romash1408/formchecker",
+    "description": "Checks form fields and generates html-table to mail it to administrator",
+    "type": "package",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "romash1408",
+            "email": "work@romash1408.ru"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "R14\\": "src/"
+        }
+    }
+}
