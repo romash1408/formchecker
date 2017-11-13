@@ -28,19 +28,27 @@ $checker = new FormChecker(
 			"subject" => "Test main form",
 			"fields" =>
 			[
-				"name" => [
-					"placeholder" => "Name",
-				],
-				"phone" => [
-					"type" => "tel",
-					"placeholder" => "Phone number",
-					"required" => true,
-				],
-				"email" => [
-					"type" => "email",
-					"placeholder" => "E-mail",
-					"required" => true,
-				],
+                "name" => [
+                    "placeholder" => "Name",
+                ],
+                "phone" => [
+                    "type" => "tel",
+                    "placeholder" => "Phone number",
+                    "required" => true,
+                ],
+                "email" => [
+                    "type" => "email",
+                    "placeholder" => "E-mail",
+                    "required" => true,
+                ],
+                "list" => [
+                    "type" => "list",
+                    "placeholder" => "List",
+                    "required" => true,
+                    "list" => [
+                        "One", "Two", "Three",
+                    ],
+                ],
 			],
 			"callback" => function($fields) use(&$usermail)
 			{
@@ -101,23 +109,24 @@ HTML;
 
 Now we have `$checker` variable with information about all our forms and send function.
 To make magic just call `$checker->work()` with formname (`"default"` by default) and
-form fields array (`$_POST` + `$_FILES` by default)
+form fields array (`$_POST` + `$_FILES` by default), like this:
+
+```php
+try
+{
+    $checker->work($_POST["formname"]);
+}
+catch (FormException $e)
+{
+    echo '<h2 style="color: red">' . $e->getMessage() . '</h2>';
+}
+```
 
 ### #1
 ``` php
 $_POST = [
     "formname" => "mainform",
 ];
-
-try {
-
-    $checker->work($_POST["formname"]);
-
-} catch (FormException $e) {
-
-    echo '<h2 style="color: red">' . $e->getMessage() . '</h2>';
-
-}
 ```
 
 #### Output:
@@ -188,9 +197,61 @@ try {
 ```
 
 #### Output:
-> ![Result of sending main form](https://romash1408.ru/untouchable/github-formchecker/readme/MAIN_FORM_SENT.jpg "Result of sending main form")
+> ![Field List must not be empty](https://romash1408.ru/untouchable/github-formchecker/readme/EMPTY_LIST.jpg "Field List must not be empty")
 
 ### #5
+``` php
+$_POST = [
+    "formname" => "mainform",
+    "name" => "Tester",
+    "phone" => "+7 (999) 999-99-99",
+    "email" => "test@gmail.com",
+    "list" => [
+        "One", "Four",
+    ],
+];
+
+try {
+
+    $checker->work($_POST["formname"]);
+
+} catch (FormException $e) {
+
+    echo '<h2 style="color: red">' . $e->getMessage() . '</h2>';
+
+}
+```
+
+#### Output:
+> ![Did not found Four in List](https://romash1408.ru/untouchable/github-formchecker/readme/WRONG_LIST.jpg "Did not found Four in List")
+
+### #6
+``` php
+$_POST = [
+    "formname" => "mainform",
+    "name" => "Tester",
+    "phone" => "+7 (999) 999-99-99",
+    "email" => "test@gmail.com",
+    "list" => [
+        "One", "Three",
+    ],
+];
+
+try {
+
+    $checker->work($_POST["formname"]);
+
+} catch (FormException $e) {
+
+    echo '<h2 style="color: red">' . $e->getMessage() . '</h2>';
+
+}
+```
+
+#### Output:
+> ![Result of sending main form](https://romash1408.ru/untouchable/github-formchecker/readme/MAIN_FORM_SENT-2.jpg "Result of sending main form")
+
+### #7
 ``` php
 $_POST = [
     "formname" => "contactform",

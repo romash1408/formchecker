@@ -21,6 +21,7 @@ class FormChecker
 		"REQUIRED_FIELD_EMPTY" => 'Field "$field" must not be empty',
 		"WRONG_EMAIL" => 'Incorrect email address format',
 		"WRONG_PHONE" => 'Incorrect phone number format',
+		"LIST_VALUE_NOT_FOUND" => 'Did not found $value in $field',
 	];
 
 	protected $forms;
@@ -107,12 +108,41 @@ class FormChecker
 			$value = "";
 			if (array_key_exists($field, $data))
 			{
-				$value = htmlspecialchars($data[$field]);
+				$value = $data[$field];
 			}
 
 			if (array_key_exists("value", $props))
 			{
 				$value = $props["value"]($value);
+			}
+			
+			if ($props["type"] == "list")
+			{ 
+
+				if (!is_array($value))
+				{
+					$value = [ $value ];
+				}
+
+				$value = array_filter($value, function($val) {
+					return !empty(trim($val));
+				});
+				
+				if (count($value) > 0)
+				{
+					$diff = array_diff($value, $props["list"]);
+
+					if (count($diff) > 0)
+					{
+						$this->exception("LIST_VALUE_NOT_FOUND", [
+							"value" => implode(", ", $diff),
+							"field" => $props["placeholder"],
+						]);
+					}
+				}
+
+				$value = implode(", ", $value);
+				$props["type"] = "text";
 			}
 
 			if (empty($value))
@@ -131,7 +161,7 @@ class FormChecker
 				}
 			}
 
-			$filled[$field] = $value;
+			$filled[$field] = $value = htmlspecialchars($value);
 			
 			switch ($props["type"])
 			{
