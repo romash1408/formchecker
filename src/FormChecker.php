@@ -28,6 +28,7 @@ class FormChecker
 	protected $send;
 	protected $styles;
 	protected $exceptions;
+	protected $correct = null;
 	public $grecaptcha = null;
 
 	public function __construct (array $forms, array $config = [])
@@ -55,6 +56,18 @@ class FormChecker
 			$config["styles"] = [];
 		}
 		$this->styles = array_merge(self::STYLES, $config["styles"]);
+
+		if (array_key_exists("correct", $config))
+		{
+			if (is_array($config["correct"]))
+			{
+				$this->correct = $config["correct"];
+			}
+			else if($config["correct"])
+			{
+				$this->correct = static::corrects();
+			}
+		}
 	}
 
 	public function work (string $formname = "default", array $data = null)
@@ -184,12 +197,33 @@ class FormChecker
 				break;
 
 			case "email":
-
 				$address = explode("@", $value);
-				if (
-					count($address) < 2 ||
-					count(dns_get_record(array_pop($address), DNS_MX)) === 0
-				) {
+				if (count($address) < 2)
+				{
+					$this->exception("WRONG_EMAIL");
+				}
+
+				$domen = array_pop($address);
+				$corrected = false;
+				if ($this->correct)
+				{
+					foreach ($this->correct as $good => $bads)
+					{
+						if ($domen == $good)
+						{
+							$corrected = true;
+							break;
+						}
+						if (in_array($domen, $bads))
+						{
+							$value = implode('@', $address) . '@' . $good;
+							$corrected = true;
+							break;
+						}
+					}
+				}
+				if (!$corrected && count(dns_get_record($domen, DNS_MX)) === 0)
+				{
 					$this->exception("WRONG_EMAIL");
 				}
 
@@ -284,6 +318,16 @@ class FormChecker
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		$ret = curl_exec($ch);
 		curl_close ($ch);
+		return $ret;
+	}
+
+	public static function corrects ()
+	{
+		static $ret = null;
+		if ($ret == null)
+		{
+			$ret = require __DIR__ . '/../res/corrections.php';
+		}
 		return $ret;
 	}
 }
